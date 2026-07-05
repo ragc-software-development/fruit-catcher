@@ -20,6 +20,7 @@ private:
     uint64_t current_tick_{0};
     size_t connected_players_count_{0};
     bool is_match_active_{false};
+    bool is_match_finished_{false};
 
 public:
     MatchContext()
@@ -126,6 +127,24 @@ public:
                 }
             }
         }
+
+        bool any_fruit_active = false;
+        for (const auto& fruit : fruits_) {
+            if (fruit.is_active) {
+                any_fruit_active = true;
+                break;
+            }
+        }
+
+        if (!any_fruit_active) {
+            is_match_active_ = false;
+            is_match_finished_ = true;
+            std::cout << "[Server] Match Finished! All fruits collected." << std::endl;
+            std::cout << "Final Scores:" << std::endl;
+            for (size_t i = 0; i < Config::max_players; ++i) {
+                std::cout << "  - Player " << (i + 1) << " (FD: " << players_[i].client_fd << "): " << players_[i].score << std::endl;
+            }
+        }
     }
 
     [[nodiscard]] auto generate_match_state_packet() const noexcept
@@ -158,6 +177,11 @@ public:
     [[nodiscard]] constexpr auto is_active() const noexcept -> bool
     {
         return is_match_active_;
+    }
+
+    [[nodiscard]] constexpr auto is_finished() const noexcept -> bool
+    {
+        return is_match_finished_;
     }
 
     [[nodiscard]] constexpr auto get_players() const noexcept -> const std::array<Common::Player, Config::max_players>&

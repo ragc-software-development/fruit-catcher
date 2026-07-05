@@ -28,7 +28,7 @@ int main()
         acceptor.poll_events(game_loop);
         game_loop.update();
 
-        if (game_loop.is_active()) {
+        if (game_loop.is_active() || game_loop.is_finished()) {
             auto packet = game_loop.generate_match_state_packet();
             for (const auto& player : game_loop.get_players()) {
                 if (player.is_connected && player.client_fd != -1) {

@@ -98,13 +98,31 @@ int main()
                     }
                 }
 
+                bool any_fruit_active = false;
                 for (size_t i = 0; i < max_fruits; ++i) {
                     const auto& f = state_packet.fruits[i];
                     if (f.is_active) {
+                        any_fruit_active = true;
                         int gx = std::clamp(static_cast<int>(f.position.x), 0, GRID_SIZE - 1);
                         int gy = std::clamp(static_cast<int>(f.position.y), 0, GRID_SIZE - 1);
                         grid[gy][gx] = 'F';
                     }
+                }
+
+                if (!any_fruit_active) {
+                    std::cout << "\033[2J\033[H";
+                    std::cout << "=========================================\n";
+                    std::cout << "     GAME OVER - ALL FRUITS COLLECTED    \n";
+                    std::cout << "=========================================\n";
+                    std::cout << "Final Scores:\n";
+                    for (size_t i = 0; i < max_players; ++i) {
+                        const auto& p = state_packet.players[i];
+                        if (p.is_active) {
+                            std::cout << "  - Player " << (i + 1) << " (FD: " << p.id << "): " << p.score << "\n";
+                        }
+                    }
+                    std::cout << "=========================================\n";
+                    break;
                 }
 
                 for (size_t i = 0; i < max_players; ++i) {
