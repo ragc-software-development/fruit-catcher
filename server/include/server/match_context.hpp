@@ -6,6 +6,7 @@
 #include "common/protocol.hpp"
 #include "common/types.hpp"
 #include "server/match_config.hpp"
+#include "server/network_acceptor.hpp"
 
 namespace ragc::Server {
 
@@ -159,6 +160,15 @@ public:
     [[nodiscard]] constexpr auto get_players() const noexcept -> const std::array<Common::Player, Config::max_players>&
     {
         return players_;
+    }
+
+    [[nodiscard]] constexpr auto get_match_config() const noexcept -> MatchConfigSnapshot
+    {
+        return MatchConfigSnapshot{
+            .max_players = static_cast<uint32_t>(Config::max_players),
+            .max_fruits  = static_cast<uint32_t>(Config::max_fruits),
+            .map_bounds  = Config::map_bounds
+        };
     }
 
 private:

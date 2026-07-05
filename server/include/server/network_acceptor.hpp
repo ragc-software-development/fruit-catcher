@@ -28,11 +28,18 @@ public:
     constexpr const E& error() const& { return std::get<1>(var_); }
 };
 
+struct MatchConfigSnapshot {
+    uint32_t max_players;
+    uint32_t max_fruits;
+    float    map_bounds;
+};
+
 template <typename T>
 concept GameMatchHandler = requires(T t, int client_fd) {
     { t.add_player(client_fd) } -> std::same_as<bool>;
     { t.remove_player(client_fd) } -> std::same_as<void>;
     { t.is_active() } -> std::same_as<bool>;
+    { t.get_match_config() } -> std::same_as<MatchConfigSnapshot>;
 };
 
 class NetworkAcceptor {

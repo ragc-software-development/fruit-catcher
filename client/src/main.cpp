@@ -37,6 +37,20 @@ int main()
         return 1;
     }
 
+    ragc::Common::Network::ServerJoinResponsePacket join_resp{};
+    ssize_t handshake_bytes = recv(sock_fd, &join_resp, sizeof(join_resp), MSG_WAITALL);
+    if (handshake_bytes != static_cast<ssize_t>(sizeof(join_resp))
+        || join_resp.op_code != ragc::Common::Network::OpCode::SERVER_JOIN_RESPONSE) {
+        std::cerr << "[Client] Handshake failed." << std::endl;
+        close(sock_fd);
+        return 1;
+    }
+    const int grid_size = static_cast<int>(join_resp.map_bounds);
+    std::cout << "[Client] Handshake OK — assigned FD: " << join_resp.assigned_client_id
+              << " | map_bounds: " << join_resp.map_bounds
+              << " | max_players: " << join_resp.max_players
+              << " | max_fruits: " << join_resp.max_fruits << std::endl;
+
     int flags = fcntl(sock_fd, F_GETFL, 0);
     if (flags != -1) {
         fcntl(sock_fd, F_SETFL, flags | O_NONBLOCK);
@@ -74,7 +88,7 @@ int main()
         ssize_t bytes_read = recv(sock_fd, &state_packet, sizeof(state_packet), 0);
         if (bytes_read > 0) {
             if (state_packet.op_code == ragc::Common::Network::OpCode::SERVER_MATCH_STATE) {
-                constexpr int GRID_SIZE = 30;
+                const int GRID_SIZE = grid_size;
                 char grid[GRID_SIZE][GRID_SIZE];
                 for (int y = 0; y < GRID_SIZE; ++y) {
                     for (int x = 0; x < GRID_SIZE; ++x) {

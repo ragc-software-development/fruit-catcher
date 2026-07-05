@@ -130,6 +130,14 @@ auto NetworkAcceptor::poll_events(Handler& match_context) noexcept -> void {
                 setsockopt(client_fd, IPPROTO_TCP, TCP_NODELAY, &nodelay, sizeof(nodelay));
 
                 if (match_context.add_player(client_fd)) {
+                    auto cfg = match_context.get_match_config();
+                    Common::Network::ServerJoinResponsePacket resp{};
+                    resp.assigned_client_id = client_fd;
+                    resp.max_players        = cfg.max_players;
+                    resp.max_fruits         = cfg.max_fruits;
+                    resp.map_bounds         = cfg.map_bounds;
+                    send(client_fd, &resp, sizeof(resp), 0);
+
                     epoll_event ev_client{};
                     ev_client.events = EPOLLIN | EPOLLET | EPOLLRDHUP;
                     ev_client.data.fd = client_fd;
@@ -140,10 +148,14 @@ auto NetworkAcceptor::poll_events(Handler& match_context) noexcept -> void {
             }
         } else {
             while (true) {
-                Common::Network::ClientInputPacket packet{};
-                ssize_t bytes_read = recv(fd, &packet, sizeof(packet), 0);
+                uint8_t buf[256];
+                ssize_t bytes_read = recv(fd, buf, sizeof(buf), 0);
                 if (bytes_read > 0) {
-                    if (packet.op_code == Common::Network::OpCode::CLIENT_INPUT) {
+                    auto opcode = static_cast<Common::Network::OpCode>(buf[0]);
+                    if (opcode == Common::Network::OpCode::CLIENT_INPUT
+                        && bytes_read == static_cast<ssize_t>(sizeof(Common::Network::ClientInputPacket))) {
+                        Common::Network::ClientInputPacket packet{};
+                        __builtin_memcpy(&packet, buf, sizeof(packet));
                         match_context.process_player_input(fd, packet.direction, 0.016f);
                     }
                 } else {

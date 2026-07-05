@@ -36,6 +36,7 @@ struct ServerJoinResponsePacket
     int32_t assigned_client_id;
     uint32_t max_players;
     uint32_t max_fruits;
+    float map_bounds;
 };
 
 struct NetworkPlayerState
