@@ -74,7 +74,7 @@ int main()
         ssize_t bytes_read = recv(sock_fd, &state_packet, sizeof(state_packet), 0);
         if (bytes_read > 0) {
             if (state_packet.op_code == ragc::Common::Network::OpCode::SERVER_MATCH_STATE) {
-                constexpr int GRID_SIZE = 50;
+                constexpr int GRID_SIZE = 30;
                 char grid[GRID_SIZE][GRID_SIZE];
                 for (int y = 0; y < GRID_SIZE; ++y) {
                     for (int x = 0; x < GRID_SIZE; ++x) {
