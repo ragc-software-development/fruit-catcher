@@ -75,8 +75,8 @@ int main()
                 for (size_t i = 0; i < 50; ++i) {
                     const auto& f = state_packet.fruits[i];
                     if (f.is_active) {
-                        int gx = std::clamp(static_cast<int>(f.position.x / 50.0f * (GRID_SIZE - 1)), 0, GRID_SIZE - 1);
-                        int gy = std::clamp(static_cast<int>(f.position.y / 50.0f * (GRID_SIZE - 1)), 0, GRID_SIZE - 1);
+                        int gx = std::clamp(static_cast<int>(f.position.x), 0, GRID_SIZE - 1);
+                        int gy = std::clamp(static_cast<int>(f.position.y), 0, GRID_SIZE - 1);
                         grid[gy][gx] = 'F';
                     }
                 }
@@ -84,8 +84,8 @@ int main()
                 for (size_t i = 0; i < 2; ++i) {
                     const auto& p = state_packet.players[i];
                     if (p.is_active) {
-                        int gx = std::clamp(static_cast<int>(p.position.x / 50.0f * (GRID_SIZE - 1)), 0, GRID_SIZE - 1);
-                        int gy = std::clamp(static_cast<int>(p.position.y / 50.0f * (GRID_SIZE - 1)), 0, GRID_SIZE - 1);
+                        int gx = std::clamp(static_cast<int>(p.position.x), 0, GRID_SIZE - 1);
+                        int gy = std::clamp(static_cast<int>(p.position.y), 0, GRID_SIZE - 1);
                         grid[gy][gx] = static_cast<char>('1' + i);
                     }
                 }
@@ -96,15 +96,15 @@ int main()
                 std::cout << "=========================================\n";
                 std::cout << "Tick Number: " << state_packet.tick_number << "\n\n";
 
-                std::cout << " +---------------------------------------+\n";
+                std::cout << " +" << std::string(GRID_SIZE * 2, '-') << "+\n";
                 for (int y = 0; y < GRID_SIZE; ++y) {
-                    std::cout << " | ";
+                    std::cout << " |";
                     for (int x = 0; x < GRID_SIZE; ++x) {
                         std::cout << grid[y][x] << ' ';
                     }
                     std::cout << "|\n";
                 }
-                std::cout << " +---------------------------------------+\n";
+                std::cout << " +" << std::string(GRID_SIZE * 2, '-') << "+\n";
                 std::cout << " Legend: 1/2 = Players, F = Fruit, . = Empty\n\n";
 
                 std::cout << "Players Status:\n";
