@@ -100,7 +100,7 @@ auto NetworkAcceptor::poll_events(Handler& match_context) noexcept -> void {
     struct kevent events[16];
     struct timespec timeout{0, 1000000}; // 1ms
 
-    int nevents = kevent(poll_fd_, events, 16, nullptr, 0, &timeout);
+    int nevents = kevent(poll_fd_, nullptr, 0, events, 16, &timeout);
     for (int i = 0; i < nevents; ++i) {
         int fd = static_cast<int>(events[i].ident);
 
