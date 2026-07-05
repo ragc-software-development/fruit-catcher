@@ -2,6 +2,7 @@
 
 #include <array>
 #include <algorithm>
+#include <iostream>
 #include "common/protocol.hpp"
 #include "common/types.hpp"
 #include "server/match_config.hpp"
@@ -29,6 +30,8 @@ public:
 
     MatchContext(const MatchContext&) = delete;
     MatchContext& operator=(const MatchContext&) = delete;
+    MatchContext(MatchContext&&) = delete;
+    MatchContext& operator=(MatchContext&&) = delete;
 
     auto add_player(int client_fd) noexcept -> bool
     {
@@ -45,8 +48,12 @@ public:
 
                 ++connected_players_count_;
 
+                std::cout << "[Server] Player connected on FD: " << client_fd 
+                          << " (" << connected_players_count_ << "/" << Config::max_players << ")" << std::endl;
+
                 if (connected_players_count_ == Config::max_players) {
                     is_match_active_ = true;
+                    std::cout << "[Server] Match starting! All players connected." << std::endl;
                 }
                 return true;
             }
@@ -64,6 +71,9 @@ public:
                 if (connected_players_count_ > 0) {
                     --connected_players_count_;
                 }
+
+                std::cout << "[Server] Player disconnected on FD: " << client_fd 
+                          << " (" << connected_players_count_ << "/" << Config::max_players << ")" << std::endl;
 
                 is_match_active_ = false;
                 break;
