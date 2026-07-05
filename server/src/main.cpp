@@ -2,16 +2,14 @@
 #include <iostream>
 #include <sys/socket.h>
 #include <thread>
-#include "server/match_context.hpp"
+#include "server/game_config.hpp"
 #include "server/network_acceptor.hpp"
-
-using StandardFrutiMatchConfig = ragc::Server::MatchConfig<2, 50>;
 
 int main()
 {
     using namespace ragc::Server;
 
-    MatchContext<StandardFrutiMatchConfig> game_loop;
+    StandardMatchContext game_loop;
     NetworkAcceptor acceptor;
 
     auto result = acceptor.listen_on(8080);

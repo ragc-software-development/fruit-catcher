@@ -1,6 +1,6 @@
 #ifdef __APPLE__
 
-#include "server/match_context.hpp"
+#include "server/game_config.hpp"
 #include "server/network_acceptor.hpp"
 
 #include <fcntl.h>
@@ -172,9 +172,7 @@ auto NetworkAcceptor::poll_events(Handler& match_context) noexcept -> void
     }
 }
 
-template auto
-NetworkAcceptor::poll_events<MatchContext<MatchConfig<2, 50>>>(MatchContext<MatchConfig<2, 50>>& match_context) noexcept
-    -> void;
+template auto NetworkAcceptor::poll_events<StandardMatchContext>(StandardMatchContext& match_context) noexcept -> void;
 
 } // namespace ragc::Server
 

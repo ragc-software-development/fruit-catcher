@@ -1,6 +1,6 @@
 #ifdef __linux__
 
-#include "server/match_context.hpp"
+#include "server/game_config.hpp"
 #include "server/network_acceptor.hpp"
 
 #include <fcntl.h>
