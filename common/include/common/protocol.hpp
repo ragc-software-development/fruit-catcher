@@ -7,6 +7,11 @@ namespace ragc::Common::Network {
 
 #pragma pack(push, 1)
 
+// Protocol-level maximums — both client and server use these to size the
+// fixed-width state packet. The handshake supplies the *actual* counts.
+constexpr size_t PROTOCOL_MAX_PLAYERS = 4;
+constexpr size_t PROTOCOL_MAX_FRUITS  = 64;
+
 enum class OpCode : uint8_t
 {
     CLIENT_INPUT = 1,
@@ -64,6 +69,9 @@ struct ServerMatchStatePacket
     NetworkPlayerState players[MaxPlayers];
     NetworkFruitState fruits[MaxFruits];
 };
+
+// Concrete type used on the wire. Both sides must agree on this.
+using StandardMatchStatePacket = ServerMatchStatePacket<PROTOCOL_MAX_PLAYERS, PROTOCOL_MAX_FRUITS>;
 
 #pragma pack(pop)
 

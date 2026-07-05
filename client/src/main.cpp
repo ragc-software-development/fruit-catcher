@@ -46,10 +46,12 @@ int main()
         return 1;
     }
     const int grid_size = static_cast<int>(join_resp.map_bounds);
+    const size_t max_players = join_resp.max_players;
+    const size_t max_fruits  = join_resp.max_fruits;
     std::cout << "[Client] Handshake OK — assigned FD: " << join_resp.assigned_client_id
               << " | map_bounds: " << join_resp.map_bounds
-              << " | max_players: " << join_resp.max_players
-              << " | max_fruits: " << join_resp.max_fruits << std::endl;
+              << " | max_players: " << max_players
+              << " | max_fruits: " << max_fruits << std::endl;
 
     int flags = fcntl(sock_fd, F_GETFL, 0);
     if (flags != -1) {
@@ -84,7 +86,7 @@ int main()
 
         send(sock_fd, &input_packet, sizeof(input_packet), 0);
 
-        ragc::Common::Network::ServerMatchStatePacket<2, 50> state_packet{};
+        ragc::Common::Network::StandardMatchStatePacket state_packet{};
         ssize_t bytes_read = recv(sock_fd, &state_packet, sizeof(state_packet), 0);
         if (bytes_read > 0) {
             if (state_packet.op_code == ragc::Common::Network::OpCode::SERVER_MATCH_STATE) {
@@ -96,7 +98,7 @@ int main()
                     }
                 }
 
-                for (size_t i = 0; i < 50; ++i) {
+                for (size_t i = 0; i < max_fruits; ++i) {
                     const auto& f = state_packet.fruits[i];
                     if (f.is_active) {
                         int gx = std::clamp(static_cast<int>(f.position.x), 0, GRID_SIZE - 1);
@@ -105,7 +107,7 @@ int main()
                     }
                 }
 
-                for (size_t i = 0; i < 2; ++i) {
+                for (size_t i = 0; i < max_players; ++i) {
                     const auto& p = state_packet.players[i];
                     if (p.is_active) {
                         int gx = std::clamp(static_cast<int>(p.position.x), 0, GRID_SIZE - 1);
@@ -132,7 +134,7 @@ int main()
                 std::cout << " Legend: 1/2 = Players, F = Fruit, . = Empty\n\n";
 
                 std::cout << "Players Status:\n";
-                for (size_t i = 0; i < 2; ++i) {
+                for (size_t i = 0; i < max_players; ++i) {
                     const auto& p = state_packet.players[i];
                     if (p.is_active) {
                         std::cout << "  - [Player " << (i + 1) << " (FD: " << p.id << ")] Score: " << p.score

@@ -129,9 +129,12 @@ public:
     }
 
     [[nodiscard]] auto generate_match_state_packet() const noexcept
-        -> Common::Network::ServerMatchStatePacket<Config::max_players, Config::max_fruits>
+        -> Common::Network::StandardMatchStatePacket
     {
-        Common::Network::ServerMatchStatePacket<Config::max_players, Config::max_fruits> packet{};
+        static_assert(Config::max_players <= Common::Network::PROTOCOL_MAX_PLAYERS, "Config::max_players exceeds protocol limit");
+        static_assert(Config::max_fruits <= Common::Network::PROTOCOL_MAX_FRUITS, "Config::max_fruits exceeds protocol limit");
+
+        Common::Network::StandardMatchStatePacket packet{};
 
         packet.op_code = Common::Network::OpCode::SERVER_MATCH_STATE;
         packet.tick_number = current_tick_;
