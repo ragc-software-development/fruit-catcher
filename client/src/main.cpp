@@ -10,6 +10,7 @@
 #include <fcntl.h>
 #include <cstring>
 #include <cmath>
+#include <random>
 
 int main()
 {
@@ -47,16 +48,25 @@ int main()
     std::cout << "[Client] Successfully connected to server. Socket options configured (O_NONBLOCK, TCP_NODELAY)." << std::endl;
 
     constexpr auto tick_duration = std::chrono::microseconds(16667);
+    constexpr int  direction_change_interval = 60; // ticks (~1 second)
+
+    std::mt19937 rng{std::random_device{}()};
+    std::uniform_real_distribution<float> angle_dist(0.0f, 2.0f * 3.14159265f);
+
+    float current_angle = angle_dist(rng);
     uint64_t frame_count = 0;
 
     while (true) {
         auto start_time = std::chrono::steady_clock::now();
 
-        float angle = static_cast<float>(frame_count) * 0.05f;
+        if (frame_count % direction_change_interval == 0) {
+            current_angle = angle_dist(rng);
+        }
+
         ragc::Common::Network::ClientInputPacket input_packet{};
         input_packet.op_code = ragc::Common::Network::OpCode::CLIENT_INPUT;
-        input_packet.direction.x = std::cos(angle);
-        input_packet.direction.y = std::sin(angle);
+        input_packet.direction.x = std::cos(current_angle);
+        input_packet.direction.y = std::sin(current_angle);
 
         send(sock_fd, &input_packet, sizeof(input_packet), 0);
 
