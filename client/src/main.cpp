@@ -92,11 +92,11 @@ int main()
     constexpr auto tick_duration = std::chrono::microseconds(16667);
     uint64_t frame_count = 0;
 
+    float move_x = 0.0f;
+    float move_y = 0.0f;
+
     while (true) {
         auto start_time = std::chrono::steady_clock::now();
-
-        float move_x = 0.0f;
-        float move_y = 0.0f;
 
         char ch;
         while (read(STDIN_FILENO, &ch, 1) > 0) {
@@ -109,19 +109,20 @@ int main()
                 if (read(STDIN_FILENO, &seq[0], 1) > 0 && read(STDIN_FILENO, &seq[1], 1) > 0) {
                     if (seq[0] == '[') {
                         switch (seq[1]) {
-                            case 'A': move_y = -1.0f; break; // Up
-                            case 'B': move_y = 1.0f;  break; // Down
-                            case 'C': move_x = 1.0f;  break; // Right
-                            case 'D': move_x = -1.0f; break; // Left
+                            case 'A': move_y = -1.0f; move_x = 0.0f; break; // Up
+                            case 'B': move_y = 1.0f;  move_x = 0.0f; break; // Down
+                            case 'C': move_x = 1.0f;  move_y = 0.0f; break; // Right
+                            case 'D': move_x = -1.0f; move_y = 0.0f; break; // Left
                         }
                     }
                 }
             } else {
                 switch (ch) {
-                    case 'w': case 'W': move_y = -1.0f; break;
-                    case 's': case 'S': move_y = 1.0f;  break;
-                    case 'a': case 'A': move_x = -1.0f; break;
-                    case 'd': case 'D': move_x = 1.0f;  break;
+                    case 'w': case 'W': move_y = -1.0f; move_x = 0.0f; break;
+                    case 's': case 'S': move_y = 1.0f;  move_x = 0.0f; break;
+                    case 'a': case 'A': move_x = -1.0f; move_y = 0.0f; break;
+                    case 'd': case 'D': move_x = 1.0f;  move_y = 0.0f; break;
+                    case ' ':           move_x = 0.0f;  move_y = 0.0f; break; // Space stops
                 }
             }
         }

@@ -4,7 +4,7 @@
 
 namespace ragc::Server {
 
-using StandardMatchConfig = MatchConfig<2, 60>;
+using StandardMatchConfig = MatchConfig<1, 60>;
 using StandardMatchContext = MatchContext<StandardMatchConfig>;
 
 } // namespace ragc::Server
