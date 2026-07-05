@@ -11,6 +11,30 @@
 #include <cstring>
 #include <cmath>
 #include <random>
+#include <termios.h>
+
+struct TerminalRawMode {
+    termios orig_termios;
+    bool enabled{false};
+
+    TerminalRawMode() {
+        if (tcgetattr(STDIN_FILENO, &orig_termios) == 0) {
+            termios raw = orig_termios;
+            raw.c_lflag &= ~(ECHO | ICANON);
+            raw.c_cc[VMIN] = 0;
+            raw.c_cc[VTIME] = 0;
+            if (tcsetattr(STDIN_FILENO, TCSAFLUSH, &raw) == 0) {
+                enabled = true;
+            }
+        }
+    }
+
+    ~TerminalRawMode() {
+        if (enabled) {
+            tcsetattr(STDIN_FILENO, TCSAFLUSH, &orig_termios);
+        }
+    }
+};
 
 int main()
 {
@@ -61,28 +85,58 @@ int main()
     int nodelay = 1;
     setsockopt(sock_fd, IPPROTO_TCP, TCP_NODELAY, &nodelay, sizeof(nodelay));
 
+    TerminalRawMode raw_mode;
     std::cout << "[Client] Successfully connected to server. Socket options configured (O_NONBLOCK, TCP_NODELAY)." << std::endl;
+    std::cout << "Controls: WASD or Arrow Keys to move. Q to quit." << std::endl;
 
     constexpr auto tick_duration = std::chrono::microseconds(16667);
-    constexpr int  direction_change_interval = 60; // ticks (~1 second)
-
-    std::mt19937 rng{std::random_device{}()};
-    std::uniform_real_distribution<float> angle_dist(0.0f, 2.0f * 3.14159265f);
-
-    float current_angle = angle_dist(rng);
     uint64_t frame_count = 0;
 
     while (true) {
         auto start_time = std::chrono::steady_clock::now();
 
-        if (frame_count % direction_change_interval == 0) {
-            current_angle = angle_dist(rng);
+        float move_x = 0.0f;
+        float move_y = 0.0f;
+
+        char ch;
+        while (read(STDIN_FILENO, &ch, 1) > 0) {
+            if (ch == 'q' || ch == 'Q') {
+                close(sock_fd);
+                return 0;
+            }
+            if (ch == '\033') { // Escape sequence
+                char seq[2];
+                if (read(STDIN_FILENO, &seq[0], 1) > 0 && read(STDIN_FILENO, &seq[1], 1) > 0) {
+                    if (seq[0] == '[') {
+                        switch (seq[1]) {
+                            case 'A': move_y = -1.0f; break; // Up
+                            case 'B': move_y = 1.0f;  break; // Down
+                            case 'C': move_x = 1.0f;  break; // Right
+                            case 'D': move_x = -1.0f; break; // Left
+                        }
+                    }
+                }
+            } else {
+                switch (ch) {
+                    case 'w': case 'W': move_y = -1.0f; break;
+                    case 's': case 'S': move_y = 1.0f;  break;
+                    case 'a': case 'A': move_x = -1.0f; break;
+                    case 'd': case 'D': move_x = 1.0f;  break;
+                }
+            }
+        }
+
+        // Normalize direction vector if moving diagonally
+        float len = std::sqrt(move_x * move_x + move_y * move_y);
+        if (len > 0.0f) {
+            move_x /= len;
+            move_y /= len;
         }
 
         ragc::Common::Network::ClientInputPacket input_packet{};
         input_packet.op_code = ragc::Common::Network::OpCode::CLIENT_INPUT;
-        input_packet.direction.x = std::cos(current_angle);
-        input_packet.direction.y = std::sin(current_angle);
+        input_packet.direction.x = move_x;
+        input_packet.direction.y = move_y;
 
         send(sock_fd, &input_packet, sizeof(input_packet), 0);
 
