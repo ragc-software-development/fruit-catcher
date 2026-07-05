@@ -146,6 +146,11 @@ public:
         return is_match_active_;
     }
 
+    [[nodiscard]] constexpr auto get_players() const noexcept -> const std::array<Common::Player, Config::max_players>&
+    {
+        return players_;
+    }
+
 private:
     auto spawn_fruits() noexcept -> void
     {

@@ -133,6 +133,20 @@ auto NetworkAcceptor::poll_events(Handler& match_context) noexcept -> void {
                     close(client_fd);
                 }
             }
+        } else {
+            Common::Network::ClientInputPacket packet{};
+            ssize_t bytes_read = recv(fd, &packet, sizeof(packet), 0);
+            if (bytes_read > 0) {
+                if (packet.op_code == Common::Network::OpCode::CLIENT_INPUT) {
+                    match_context.process_player_input(fd, packet.direction, 0.016f);
+                }
+            } else if (bytes_read == 0 || (bytes_read < 0 && errno != EAGAIN && errno != EWOULDBLOCK)) {
+                match_context.remove_player(fd);
+                struct kevent change{};
+                EV_SET(&change, fd, EVFILT_READ, EV_DELETE, 0, 0, nullptr);
+                kevent(poll_fd_, &change, 1, nullptr, 0, nullptr);
+                close(fd);
+            }
         }
     }
 }

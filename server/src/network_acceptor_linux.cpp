@@ -138,6 +138,24 @@ auto NetworkAcceptor::poll_events(Handler& match_context) noexcept -> void {
                     close(client_fd);
                 }
             }
+        } else {
+            while (true) {
+                Common::Network::ClientInputPacket packet{};
+                ssize_t bytes_read = recv(fd, &packet, sizeof(packet), 0);
+                if (bytes_read > 0) {
+                    if (packet.op_code == Common::Network::OpCode::CLIENT_INPUT) {
+                        match_context.process_player_input(fd, packet.direction, 0.016f);
+                    }
+                } else {
+                    if (bytes_read < 0 && (errno == EAGAIN || errno == EWOULDBLOCK)) {
+                        break;
+                    }
+                    match_context.remove_player(fd);
+                    epoll_ctl(poll_fd_, EPOLL_CTL_DEL, fd, nullptr);
+                    close(fd);
+                    break;
+                }
+            }
         }
     }
 }
