@@ -28,8 +28,10 @@ int main()
         return 1;
     }
 
+    std::cout << "[Client] Attempting to connect to 127.0.0.1:8080..." << std::endl;
+
     if (connect(sock_fd, reinterpret_cast<sockaddr*>(&server_addr), sizeof(server_addr)) == -1) {
-        std::cerr << "Connection failed" << std::endl;
+        std::cerr << "[Client] Connection failed" << std::endl;
         close(sock_fd);
         return 1;
     }
@@ -42,7 +44,7 @@ int main()
     int nodelay = 1;
     setsockopt(sock_fd, IPPROTO_TCP, TCP_NODELAY, &nodelay, sizeof(nodelay));
 
-    std::cout << "Connected to server. Playing game..." << std::endl;
+    std::cout << "[Client] Successfully connected to server. Socket options configured (O_NONBLOCK, TCP_NODELAY)." << std::endl;
 
     constexpr auto tick_duration = std::chrono::microseconds(16667);
     uint64_t frame_count = 0;
