@@ -12,7 +12,7 @@ struct MatchConfig
     static constexpr size_t max_fruits = MaxFruits;
 
     static constexpr float collision_radius_sq = 1.0f * 1.0f;
-    static constexpr float map_bounds = 30.0f;
+    static constexpr float map_bounds = 15.0f;
 };
 
 template <typename T>

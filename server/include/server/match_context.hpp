@@ -3,6 +3,8 @@
 #include <array>
 #include <algorithm>
 #include <iostream>
+#include <vector>
+#include <random>
 #include "common/protocol.hpp"
 #include "common/types.hpp"
 #include "server/match_config.hpp"
@@ -201,13 +203,40 @@ public:
 private:
     auto spawn_fruits() noexcept -> void
     {
+        const int width = static_cast<int>(Config::map_bounds);
+        const int height = static_cast<int>(Config::map_bounds);
+        const size_t total_cells = static_cast<size_t>(width * height);
+
+        // Cap the number of fruits to the total cells available to avoid infinite layout or overlap
+        const size_t spawn_count = std::min(Config::max_fruits, total_cells);
+        if (spawn_count < Config::max_fruits) {
+            std::cerr << "[Warning] Configured max_fruits (" << Config::max_fruits 
+                      << ") exceeds total map cells (" << total_cells 
+                      << "). Spawning only " << spawn_count << " fruits." << std::endl;
+        }
+
+        // Generate all unique grid coordinate slots
+        std::vector<Common::Vec2> cell_slots;
+        cell_slots.reserve(total_cells);
+        for (int y = 0; y < height; ++y) {
+            for (int x = 0; x < width; ++x) {
+                cell_slots.push_back(Common::Vec2{static_cast<float>(x), static_cast<float>(y)});
+            }
+        }
+
+        // Shuffle the slots
+        std::mt19937 g(1337); // Use a fixed seed for deterministic reproducible layouts, or random_device
+        std::shuffle(cell_slots.begin(), cell_slots.end(), g);
+
         for (uint32_t i = 0; i < Config::max_fruits; ++i) {
+            bool is_active = (i < spawn_count);
+            Common::Vec2 pos = is_active ? cell_slots[i] : Common::Vec2{0.0f, 0.0f};
+
             fruits_[i] = Common::Fruit{
                 .id = static_cast<Common::EntityId>(i + 1),
-                .position = Common::Vec2{.x = static_cast<float>((i * 7) % static_cast<int>(Config::map_bounds)),
-                                         .y = static_cast<float>((i * 13) % static_cast<int>(Config::map_bounds))},
+                .position = pos,
                 .points_value = 10,
-                .is_active = true};
+                .is_active = is_active};
         }
     }
 };
