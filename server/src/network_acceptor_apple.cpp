@@ -1,22 +1,25 @@
 #ifdef __APPLE__
 
-#include "server/network_acceptor.hpp"
 #include "server/match_context.hpp"
+#include "server/network_acceptor.hpp"
 
-#include <sys/types.h>
-#include <sys/socket.h>
-#include <sys/event.h>
+#include <fcntl.h>
 #include <netinet/in.h>
 #include <netinet/tcp.h>
-#include <unistd.h>
-#include <fcntl.h>
+#include <sys/event.h>
+#include <sys/socket.h>
+#include <sys/types.h>
 #include <system_error>
+#include <unistd.h>
 
 namespace ragc::Server {
 
-NetworkAcceptor::NetworkAcceptor() noexcept : listen_fd_(-1), poll_fd_(-1) {}
+NetworkAcceptor::NetworkAcceptor() noexcept : listen_fd_(-1), poll_fd_(-1)
+{
+}
 
-NetworkAcceptor::~NetworkAcceptor() noexcept {
+NetworkAcceptor::~NetworkAcceptor() noexcept
+{
     if (listen_fd_ != -1) {
         close(listen_fd_);
     }
@@ -26,15 +29,19 @@ NetworkAcceptor::~NetworkAcceptor() noexcept {
 }
 
 NetworkAcceptor::NetworkAcceptor(NetworkAcceptor&& other) noexcept
-    : listen_fd_(other.listen_fd_), poll_fd_(other.poll_fd_) {
+    : listen_fd_(other.listen_fd_), poll_fd_(other.poll_fd_)
+{
     other.listen_fd_ = -1;
     other.poll_fd_ = -1;
 }
 
-NetworkAcceptor& NetworkAcceptor::operator=(NetworkAcceptor&& other) noexcept {
+NetworkAcceptor& NetworkAcceptor::operator=(NetworkAcceptor&& other) noexcept
+{
     if (this != &other) {
-        if (listen_fd_ != -1) close(listen_fd_);
-        if (poll_fd_ != -1) close(poll_fd_);
+        if (listen_fd_ != -1)
+            close(listen_fd_);
+        if (poll_fd_ != -1)
+            close(poll_fd_);
         listen_fd_ = other.listen_fd_;
         poll_fd_ = other.poll_fd_;
         other.listen_fd_ = -1;
@@ -43,7 +50,8 @@ NetworkAcceptor& NetworkAcceptor::operator=(NetworkAcceptor&& other) noexcept {
     return *this;
 }
 
-auto NetworkAcceptor::listen_on(uint16_t port) noexcept -> expected<void, std::error_code> {
+auto NetworkAcceptor::listen_on(uint16_t port) noexcept -> expected<void, std::error_code>
+{
     listen_fd_ = socket(AF_INET, SOCK_STREAM, 0);
     if (listen_fd_ == -1) [[unlikely]] {
         return unexpected(std::error_code(errno, std::generic_category()));
@@ -92,7 +100,8 @@ auto NetworkAcceptor::listen_on(uint16_t port) noexcept -> expected<void, std::e
 }
 
 template <GameMatchHandler Handler>
-auto NetworkAcceptor::poll_events(Handler& match_context) noexcept -> void {
+auto NetworkAcceptor::poll_events(Handler& match_context) noexcept -> void
+{
     if (poll_fd_ == -1 || listen_fd_ == -1) [[unlikely]] {
         return;
     }
@@ -121,7 +130,7 @@ auto NetworkAcceptor::poll_events(Handler& match_context) noexcept -> void {
                 if (flags != -1) {
                     fcntl(client_fd, F_SETFL, flags | O_NONBLOCK);
                 }
-                
+
                 int nodelay = 1;
                 setsockopt(client_fd, IPPROTO_TCP, TCP_NODELAY, &nodelay, sizeof(nodelay));
 
@@ -129,9 +138,9 @@ auto NetworkAcceptor::poll_events(Handler& match_context) noexcept -> void {
                     auto cfg = match_context.get_match_config();
                     Common::Network::ServerJoinResponsePacket resp{};
                     resp.assigned_client_id = client_fd;
-                    resp.max_players        = cfg.max_players;
-                    resp.max_fruits         = cfg.max_fruits;
-                    resp.map_bounds         = cfg.map_bounds;
+                    resp.max_players = cfg.max_players;
+                    resp.max_fruits = cfg.max_fruits;
+                    resp.map_bounds = cfg.map_bounds;
                     send(client_fd, &resp, sizeof(resp), 0);
 
                     struct kevent change{};
@@ -146,8 +155,8 @@ auto NetworkAcceptor::poll_events(Handler& match_context) noexcept -> void {
             ssize_t bytes_read = recv(fd, buf, sizeof(buf), 0);
             if (bytes_read > 0) {
                 auto opcode = static_cast<Common::Network::OpCode>(buf[0]);
-                if (opcode == Common::Network::OpCode::CLIENT_INPUT
-                    && bytes_read == static_cast<ssize_t>(sizeof(Common::Network::ClientInputPacket))) {
+                if (opcode == Common::Network::OpCode::CLIENT_INPUT &&
+                    bytes_read == static_cast<ssize_t>(sizeof(Common::Network::ClientInputPacket))) {
                     Common::Network::ClientInputPacket packet{};
                     __builtin_memcpy(&packet, buf, sizeof(packet));
                     match_context.process_player_input(fd, packet.direction, 0.016f);
@@ -163,8 +172,9 @@ auto NetworkAcceptor::poll_events(Handler& match_context) noexcept -> void {
     }
 }
 
-template auto NetworkAcceptor::poll_events<MatchContext<MatchConfig<2, 50>>>(
-    MatchContext<MatchConfig<2, 50>>& match_context) noexcept -> void;
+template auto
+NetworkAcceptor::poll_events<MatchContext<MatchConfig<2, 50>>>(MatchContext<MatchConfig<2, 50>>& match_context) noexcept
+    -> void;
 
 } // namespace ragc::Server
 

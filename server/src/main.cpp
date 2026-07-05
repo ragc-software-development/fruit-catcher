@@ -1,9 +1,9 @@
-#include "server/match_context.hpp"
-#include "server/network_acceptor.hpp"
-#include <thread>
 #include <chrono>
 #include <iostream>
 #include <sys/socket.h>
+#include <thread>
+#include "server/match_context.hpp"
+#include "server/network_acceptor.hpp"
 
 using StandardFrutiMatchConfig = ragc::Server::MatchConfig<2, 50>;
 
@@ -39,8 +39,8 @@ int main()
             }
         }
 
-        auto elapsed = std::chrono::duration_cast<std::chrono::microseconds>(
-            std::chrono::steady_clock::now() - start_time);
+        auto elapsed =
+            std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::steady_clock::now() - start_time);
         if (elapsed < tick_duration) {
             std::this_thread::sleep_for(tick_duration - elapsed);
         }
