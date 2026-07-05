@@ -11,7 +11,7 @@ struct MatchConfig
     static constexpr size_t max_players = MaxPlayers;
     static constexpr size_t max_fruits = MaxFruits;
 
-    static constexpr float collision_radius_sq = 2.0f * 2.0f;
+    static constexpr float collision_radius_sq = 1.0f * 1.0f;
     static constexpr float map_bounds = 50.0f;
 };
 
