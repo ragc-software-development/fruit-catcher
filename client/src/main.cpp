@@ -64,37 +64,58 @@ int main()
         ssize_t bytes_read = recv(sock_fd, &state_packet, sizeof(state_packet), 0);
         if (bytes_read > 0) {
             if (state_packet.op_code == ragc::Common::Network::OpCode::SERVER_MATCH_STATE) {
-                std::cout << "\033[2J\033[H";
-                std::cout << "=================================\n";
-                std::cout << "        FRUIT CATCHER CLIENT     \n";
-                std::cout << "=================================\n";
-                std::cout << "Tick Number: " << state_packet.tick_number << "\n\n";
-
-                std::cout << "Players:\n";
-                for (size_t i = 0; i < 2; ++i) {
-                    const auto& p = state_packet.players[i];
-                    if (p.is_active) {
-                        std::cout << "  [Player " << p.id << "] Position: ("
-                                  << p.position.x << ", " << p.position.y
-                                  << ") | Score: " << p.score << "\n";
+                constexpr int GRID_SIZE = 20;
+                char grid[GRID_SIZE][GRID_SIZE];
+                for (int y = 0; y < GRID_SIZE; ++y) {
+                    for (int x = 0; x < GRID_SIZE; ++x) {
+                        grid[y][x] = '.';
                     }
                 }
 
-                std::cout << "\nActive Fruits:\n";
-                int active_fruit_count = 0;
                 for (size_t i = 0; i < 50; ++i) {
                     const auto& f = state_packet.fruits[i];
                     if (f.is_active) {
-                        if (++active_fruit_count <= 5) {
-                            std::cout << "  [Fruit " << f.id << "] Position: ("
-                                      << f.position.x << ", " << f.position.y << ")\n";
-                        }
+                        int gx = std::clamp(static_cast<int>(f.position.x / 50.0f * (GRID_SIZE - 1)), 0, GRID_SIZE - 1);
+                        int gy = std::clamp(static_cast<int>(f.position.y / 50.0f * (GRID_SIZE - 1)), 0, GRID_SIZE - 1);
+                        grid[gy][gx] = 'F';
                     }
                 }
-                if (active_fruit_count > 5) {
-                    std::cout << "  ... and " << (active_fruit_count - 5) << " more active fruits.\n";
+
+                for (size_t i = 0; i < 2; ++i) {
+                    const auto& p = state_packet.players[i];
+                    if (p.is_active) {
+                        int gx = std::clamp(static_cast<int>(p.position.x / 50.0f * (GRID_SIZE - 1)), 0, GRID_SIZE - 1);
+                        int gy = std::clamp(static_cast<int>(p.position.y / 50.0f * (GRID_SIZE - 1)), 0, GRID_SIZE - 1);
+                        grid[gy][gx] = static_cast<char>('1' + i);
+                    }
                 }
-                std::cout << "=================================\n";
+
+                std::cout << "\033[2J\033[H";
+                std::cout << "=========================================\n";
+                std::cout << "          FRUIT CATCHER CLIENT           \n";
+                std::cout << "=========================================\n";
+                std::cout << "Tick Number: " << state_packet.tick_number << "\n\n";
+
+                std::cout << " +---------------------------------------+\n";
+                for (int y = 0; y < GRID_SIZE; ++y) {
+                    std::cout << " | ";
+                    for (int x = 0; x < GRID_SIZE; ++x) {
+                        std::cout << grid[y][x] << ' ';
+                    }
+                    std::cout << "|\n";
+                }
+                std::cout << " +---------------------------------------+\n";
+                std::cout << " Legend: 1/2 = Players, F = Fruit, . = Empty\n\n";
+
+                std::cout << "Players Status:\n";
+                for (size_t i = 0; i < 2; ++i) {
+                    const auto& p = state_packet.players[i];
+                    if (p.is_active) {
+                        std::cout << "  - [Player " << (i + 1) << " (FD: " << p.id << ")] Score: " << p.score
+                                  << " | Pos: (" << p.position.x << ", " << p.position.y << ")\n";
+                    }
+                }
+                std::cout << "=========================================\n";
             }
         } else if (bytes_read == 0) {
             std::cout << "Server closed connection." << std::endl;
