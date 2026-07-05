@@ -1,10 +1,10 @@
 #include "server/match_context.hpp"
 
-using StandardFrutiMatchConfig = ragc::server::MatchConfig<2, 50>;
+using StandardFrutiMatchConfig = ragc::Server::MatchConfig<2, 50>;
 
 int main()
 {
-    using namespace ragc::server;
+    using namespace ragc::Server;
 
     MatchContext<StandardFrutiMatchConfig> game_loop;
 

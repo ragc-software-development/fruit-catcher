@@ -2,7 +2,7 @@
 
 #include <cstdint>
 
-namespace ragc::common {
+namespace ragc::Common {
 
 enum class EntityId : uint32_t
 {
@@ -39,4 +39,4 @@ struct Player
     bool is_connected{false};
 };
 
-} // namespace ragc::common
+} // namespace ragc::Common

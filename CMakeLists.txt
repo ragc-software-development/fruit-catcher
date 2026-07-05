@@ -6,6 +6,8 @@ project(FruitCatcher
     LANGUAGES CXX
 )
 
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+
 add_library(${PROJECT_NAME}_options INTERFACE)
 
 target_compile_features(${PROJECT_NAME}_options INTERFACE cxx_std_20)

@@ -1,18 +1,19 @@
 #pragma once
 
 #include <array>
+#include <algorithm>
 #include "common/protocol.hpp"
 #include "common/types.hpp"
 #include "server/match_config.hpp"
 
-namespace ragc::server {
+namespace ragc::Server {
 
 template <ValidMatchConfig Config>
 class MatchContext
 {
 private:
-    std::array<common::Player, Config::max_players> players_;
-    std::array<common::Fruit, Config::max_fruits> fruits_;
+    std::array<Common::Player, Config::max_players> players_;
+    std::array<Common::Fruit, Config::max_fruits> fruits_;
 
     uint64_t current_tick_{0};
     size_t connected_players_count_{0};
@@ -38,7 +39,7 @@ public:
         for (auto& player : players_) {
             if (!player.is_connected) {
                 player.client_fd = client_fd;
-                player.position = common::Vec2{10.0f * static_cast<float>(connected_players_count_ + 1), 25.0f};
+                player.position = Common::Vec2{10.0f * static_cast<float>(connected_players_count_ + 1), 25.0f};
                 player.score = 0;
                 player.is_connected = true;
 
@@ -70,7 +71,7 @@ public:
         }
     }
 
-    auto process_player_input(int client_fd, const common::Vec2& direction, float delta_time) noexcept -> void
+    auto process_player_input(int client_fd, const Common::Vec2& direction, float delta_time) noexcept -> void
     {
         if (!is_match_active_) {
             return;
@@ -116,22 +117,23 @@ public:
         }
     }
 
-    [[nodiscard]] auto generate_match_state_packet() const noexcept -> common::Network::ServerMatchStatePacket
+    [[nodiscard]] auto generate_match_state_packet() const noexcept
+        -> Common::Network::ServerMatchStatePacket<Config::max_players, Config::max_fruits>
     {
-        common::Network::ServerMatchStatePacket packet{};
+        Common::Network::ServerMatchStatePacket<Config::max_players, Config::max_fruits> packet{};
 
-        packet.op_code = common::Network::OpCode::SERVER_MATCH_STATE;
+        packet.op_code = Common::Network::OpCode::SERVER_MATCH_STATE;
         packet.tick_number = current_tick_;
 
         for (size_t i = 0; i < Config::max_players; ++i) {
-            packet.players[i] = common::Network::NetworkPlayerState{.id = players_[i].client_fd,
+            packet.players[i] = Common::Network::NetworkPlayerState{.id = players_[i].client_fd,
                                                                     .position = players_[i].position,
                                                                     .score = players_[i].score,
                                                                     .is_active = players_[i].is_connected};
         }
 
         for (size_t i = 0; i < Config::max_fruits; ++i) {
-            packet.fruits[i] = common::Network::NetworkFruitState{.id = static_cast<uint32_t>(fruits_[i].id),
+            packet.fruits[i] = Common::Network::NetworkFruitState{.id = static_cast<uint32_t>(fruits_[i].id),
                                                                   .position = fruits_[i].position,
                                                                   .is_active = fruits_[i].is_active};
         }
@@ -148,16 +150,14 @@ private:
     auto spawn_fruits() noexcept -> void
     {
         for (uint32_t i = 0; i < Config::max_fruits; ++i) {
-            fruits_[i] = common::Fruit
-            {
-                .id = static_cast<common::EntityId>(i + 1),
-                .position = common::Vec2{.x = static_cast<float>((i * 7) % static_cast<int>(Config::map_bounds)),
+            fruits_[i] = Common::Fruit{
+                .id = static_cast<Common::EntityId>(i + 1),
+                .position = Common::Vec2{.x = static_cast<float>((i * 7) % static_cast<int>(Config::map_bounds)),
                                          .y = static_cast<float>((i * 13) % static_cast<int>(Config::map_bounds))},
                 .points_value = 10,
-                .is_active = true
-            };
+                .is_active = true};
         }
     }
 };
 
-} // namespace ragc::server
+} // namespace ragc::Server

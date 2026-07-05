@@ -3,7 +3,7 @@
 #include <concepts>
 #include <cstddef>
 
-namespace ragc::server {
+namespace ragc::Server {
 
 template <size_t MaxPlayers, size_t MaxFruits>
 struct MatchConfig
@@ -22,4 +22,4 @@ concept ValidMatchConfig = requires {
     requires T::max_players > 0 && T::max_players <= 16;
 };
 
-} // namespace ragc::server
+} // namespace ragc::Server
