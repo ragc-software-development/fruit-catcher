@@ -9,24 +9,21 @@ enum class EntityId : uint32_t
     INVALID = 0
 };
 
-struct alignas(16) Vec2
+struct IVec2
 {
-    float x{0.0f};
-    float y{0.0f};
+    int32_t x{0};
+    int32_t y{0};
 
-    [[nodiscard]] constexpr float distance_sq(const Vec2& other) const noexcept
+    [[nodiscard]] constexpr bool operator==(const IVec2& other) const noexcept
     {
-        float dx = x - other.x;
-        float dy = y - other.y;
-
-        return (dx * dx) + (dy * dy);
+        return x == other.x && y == other.y;
     }
 };
 
 struct Fruit
 {
     EntityId id{EntityId::INVALID};
-    Vec2 position;
+    IVec2 position;
     uint32_t points_value{10};
     bool is_active{false};
 };
@@ -34,9 +31,10 @@ struct Fruit
 struct Player
 {
     int client_fd{-1};
-    Vec2 position;
+    IVec2 position;
     uint32_t score{0};
     bool is_connected{false};
+    uint64_t last_move_tick{0}; // Add logic to throttle movement speed
 };
 
 } // namespace ragc::Common

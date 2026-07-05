@@ -46,9 +46,13 @@ public:
         for (auto& player : players_) {
             if (!player.is_connected) {
                 player.client_fd = client_fd;
-                player.position = Common::Vec2{10.0f * static_cast<float>(connected_players_count_ + 1), 25.0f};
+                player.position = Common::IVec2{
+                    static_cast<int32_t>(3 * (connected_players_count_ + 1)),
+                    static_cast<int32_t>(Config::map_bounds / 2)
+                };
                 player.score = 0;
                 player.is_connected = true;
+                player.last_move_tick = 0;
 
                 ++connected_players_count_;
 
@@ -85,21 +89,28 @@ public:
         }
     }
 
-    auto process_player_input(int client_fd, const Common::Vec2& direction, float delta_time) noexcept -> void
+    auto process_player_input(int client_fd, const Common::IVec2& direction, float /*delta_time*/) noexcept -> void
     {
         if (!is_match_active_) {
             return;
         }
 
+        // Throttle player movement: maximum 1 move per 6 ticks (~100ms)
+        constexpr uint64_t MOVE_COOLDOWN_TICKS = 6;
+
         for (auto& player : players_) {
             if (player.is_connected && player.client_fd == client_fd) {
-                constexpr float SPEED = 15.0f;
-                player.position.x += direction.x * SPEED * delta_time;
-                player.position.y += direction.y * SPEED * delta_time;
+                if (current_tick_ - player.last_move_tick >= MOVE_COOLDOWN_TICKS) {
+                    if (direction.x != 0 || direction.y != 0) {
+                        player.position.x += direction.x;
+                        player.position.y += direction.y;
 
-                player.position.x = std::clamp(player.position.x, 0.0f, Config::map_bounds);
-                player.position.y = std::clamp(player.position.y, 0.0f, Config::map_bounds);
+                        player.position.x = std::clamp(player.position.x, 0, Config::map_bounds - 1);
+                        player.position.y = std::clamp(player.position.y, 0, Config::map_bounds - 1);
 
+                        player.last_move_tick = current_tick_;
+                    }
+                }
                 break;
             }
         }
@@ -123,7 +134,7 @@ public:
                     continue;
                 }
 
-                if (player.position.distance_sq(fruit.position) < Config::collision_radius_sq) {
+                if (player.position == fruit.position) {
                     fruit.is_active = false;
                     player.score += fruit.points_value;
                 }
@@ -196,7 +207,7 @@ public:
         return MatchConfigSnapshot{
             .max_players = static_cast<uint32_t>(Config::max_players),
             .max_fruits  = static_cast<uint32_t>(Config::max_fruits),
-            .map_bounds  = Config::map_bounds
+            .map_bounds  = static_cast<float>(Config::map_bounds)
         };
     }
 
@@ -216,21 +227,21 @@ private:
         }
 
         // Generate all unique grid coordinate slots
-        std::vector<Common::Vec2> cell_slots;
+        std::vector<Common::IVec2> cell_slots;
         cell_slots.reserve(total_cells);
         for (int y = 0; y < height; ++y) {
             for (int x = 0; x < width; ++x) {
-                cell_slots.push_back(Common::Vec2{static_cast<float>(x), static_cast<float>(y)});
+                cell_slots.push_back(Common::IVec2{x, y});
             }
         }
 
         // Shuffle the slots
-        std::mt19937 g(1337); // Use a fixed seed for deterministic reproducible layouts, or random_device
+        std::mt19937 g(1337); // Use a fixed seed for deterministic layouts
         std::shuffle(cell_slots.begin(), cell_slots.end(), g);
 
         for (uint32_t i = 0; i < Config::max_fruits; ++i) {
             bool is_active = (i < spawn_count);
-            Common::Vec2 pos = is_active ? cell_slots[i] : Common::Vec2{0.0f, 0.0f};
+            Common::IVec2 pos = is_active ? cell_slots[i] : Common::IVec2{0, 0};
 
             fruits_[i] = Common::Fruit{
                 .id = static_cast<Common::EntityId>(i + 1),

@@ -92,8 +92,8 @@ int main()
     constexpr auto tick_duration = std::chrono::microseconds(16667);
     uint64_t frame_count = 0;
 
-    float move_x = 0.0f;
-    float move_y = 0.0f;
+    int32_t move_x = 0;
+    int32_t move_y = 0;
 
     while (true) {
         auto start_time = std::chrono::steady_clock::now();
@@ -109,29 +109,22 @@ int main()
                 if (read(STDIN_FILENO, &seq[0], 1) > 0 && read(STDIN_FILENO, &seq[1], 1) > 0) {
                     if (seq[0] == '[') {
                         switch (seq[1]) {
-                            case 'A': move_y = -1.0f; move_x = 0.0f; break; // Up
-                            case 'B': move_y = 1.0f;  move_x = 0.0f; break; // Down
-                            case 'C': move_x = 1.0f;  move_y = 0.0f; break; // Right
-                            case 'D': move_x = -1.0f; move_y = 0.0f; break; // Left
+                            case 'A': move_y = -1; move_x = 0; break; // Up
+                            case 'B': move_y = 1;  move_x = 0; break; // Down
+                            case 'C': move_x = 1;  move_y = 0; break; // Right
+                            case 'D': move_x = -1; move_y = 0; break; // Left
                         }
                     }
                 }
             } else {
                 switch (ch) {
-                    case 'w': case 'W': move_y = -1.0f; move_x = 0.0f; break;
-                    case 's': case 'S': move_y = 1.0f;  move_x = 0.0f; break;
-                    case 'a': case 'A': move_x = -1.0f; move_y = 0.0f; break;
-                    case 'd': case 'D': move_x = 1.0f;  move_y = 0.0f; break;
-                    case ' ':           move_x = 0.0f;  move_y = 0.0f; break; // Space stops
+                    case 'w': case 'W': move_y = -1; move_x = 0; break;
+                    case 's': case 'S': move_y = 1;  move_x = 0; break;
+                    case 'a': case 'A': move_x = -1; move_y = 0; break;
+                    case 'd': case 'D': move_x = 1;  move_y = 0; break;
+                    case ' ':           move_x = 0;  move_y = 0; break; // Space stops
                 }
             }
-        }
-
-        // Normalize direction vector if moving diagonally
-        float len = std::sqrt(move_x * move_x + move_y * move_y);
-        if (len > 0.0f) {
-            move_x /= len;
-            move_y /= len;
         }
 
         ragc::Common::Network::ClientInputPacket input_packet{};
@@ -158,8 +151,8 @@ int main()
                     const auto& f = state_packet.fruits[i];
                     if (f.is_active) {
                         any_fruit_active = true;
-                        int gx = std::clamp(static_cast<int>(f.position.x), 0, GRID_SIZE - 1);
-                        int gy = std::clamp(static_cast<int>(f.position.y), 0, GRID_SIZE - 1);
+                        int gx = std::clamp(f.position.x, 0, GRID_SIZE - 1);
+                        int gy = std::clamp(f.position.y, 0, GRID_SIZE - 1);
                         grid[gy][gx] = 'F';
                     }
                 }
@@ -183,8 +176,8 @@ int main()
                 for (size_t i = 0; i < max_players; ++i) {
                     const auto& p = state_packet.players[i];
                     if (p.is_active) {
-                        int gx = std::clamp(static_cast<int>(p.position.x), 0, GRID_SIZE - 1);
-                        int gy = std::clamp(static_cast<int>(p.position.y), 0, GRID_SIZE - 1);
+                        int gx = std::clamp(p.position.x, 0, GRID_SIZE - 1);
+                        int gy = std::clamp(p.position.y, 0, GRID_SIZE - 1);
                         grid[gy][gx] = static_cast<char>('1' + i);
                     }
                 }

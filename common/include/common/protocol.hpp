@@ -24,7 +24,7 @@ enum class OpCode : uint8_t
 struct ClientInputPacket
 {
     OpCode op_code{OpCode::CLIENT_INPUT};
-    Vec2 direction;
+    IVec2 direction;
 };
 
 // Handshake Packet [Client -> Server] (Request to join a match)
@@ -47,7 +47,7 @@ struct ServerJoinResponsePacket
 struct NetworkPlayerState
 {
     int32_t id;
-    Vec2 position;
+    IVec2 position;
     uint32_t score;
     bool is_active;
 };
@@ -55,7 +55,7 @@ struct NetworkPlayerState
 struct NetworkFruitState
 {
     uint32_t id;
-    Vec2 position;
+    IVec2 position;
     bool is_active;
 };
 
